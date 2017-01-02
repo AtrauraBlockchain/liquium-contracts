@@ -1,0 +1,41 @@
+{
+  "name": "liquiumcontracts",
+  "version": "0.0.1",
+  "description": "Contracts for Liquium project.",
+  "main": "js/liquium_rt.js",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "test": "mocha"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Giveth/vaultcontract.git"
+  },
+  "keywords": [
+    "liquium",
+    "liquid",
+    "democracy",
+    "solidity",
+    "smart",
+    "contract",
+    "poll",
+    "voting",
+    "ethereum",
+    "blockchain"
+  ],
+  "author": "Jordi Baylina",
+  "license": "GPL-3.0",
+  "bugs": {
+    "url": "https://github.com/AtrauraBlockchain/liquium/issues"
+  },
+  "homepage": "https://github.com/AtrauraBlockchain/liquium",
+  "devDependencies": {
+    "ethconnector": "^0.0.20"
+  },
+  "dependencies": {
+    "async": "^2.1.4",
+    "lodash": "^4.17.4"
+  }
+}
