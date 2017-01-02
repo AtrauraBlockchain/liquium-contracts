@@ -1,5 +1,5 @@
 {
-  "name": "liquiumcontracts",
+  "name": "liquium-contracts",
   "version": "0.0.1",
   "description": "Contracts for Liquium project.",
   "main": "js/liquium_rt.js",
@@ -28,9 +28,9 @@
   "author": "Jordi Baylina",
   "license": "GPL-3.0",
   "bugs": {
-    "url": "https://github.com/AtrauraBlockchain/liquium/issues"
+    "url": "https://github.com/AtrauraBlockchain/liquium-contracts/issues"
   },
-  "homepage": "https://github.com/AtrauraBlockchain/liquium",
+  "homepage": "https://github.com/AtrauraBlockchain/liquium-contracts",
   "devDependencies": {
     "ethconnector": "^0.0.20"
   },
