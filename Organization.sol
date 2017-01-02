@@ -541,6 +541,7 @@ contract Organization is OrganizationInterface, Owned {
         } else {
             c.delegateStatus = delegateStatusFactory.createDelegateStatus(0);
         }
+        CategoryAdded(categories.length-1);
     }
 
     function removeCategory(uint _idCategory) onlyOwner {
@@ -625,6 +626,7 @@ contract Organization is OrganizationInterface, Owned {
 // Events
 
     event PollAdded(uint indexed idPoll);
+    event CategoryAdded(uint indexed idCategory);
 }
 
 

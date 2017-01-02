@@ -9,6 +9,7 @@ var interfaces = require('./interfaces.js');
 module.exports.deployOrganization = deployOrganization;
 module.exports.deployDelegateStatusFactory = deployDelegateStatusFactory;
 module.exports.getSingleChoiceParams = getSingleChoiceParams;
+module.exports.addCategory = addCategory;
 
 
 module.exports.deploySingleChoice = deploySingleChoice;
@@ -44,7 +45,7 @@ function deployOrganization (web3, account, opts, cb) {
                 {
                     from: account,
                     data: interfaces.organizationByteCode,
-                    gas: '4700000'
+                    gas: '4712000'
                 },
                 function(err, _organization) {
                     if (err) return cb(err);
@@ -86,6 +87,37 @@ function deployDelegateStatusFactory(web3, account, opts, cb) {
     });
 }
 
+function addCategory(web3, organizationAddr, categoryName, idCateoryParent, cb) {
+    var owner;
+    var idCategory;
+    var organization = web3.eth.contract(interfaces.organizationAbi).at(organizationAddr);
+
+    return async.series([
+        function(cb) {
+            organization.owner(function(err, res) {
+                if (err) return cb(err);
+                owner = res;
+                cb();
+            });
+        },
+        function(cb) {
+            organization.addCategory(categoryName, idCateoryParent, { from: owner, gas: 1000000}, function(err, txHash) {
+                if (err) return cb(err);
+
+                    web3.eth.getTransactionReceipt(txHash, function(err, res) {
+                        // log 0 -> CategoryAdded
+                        //      topic 0 -> Event Name
+                        //      topic 1 -> idSubmission
+                        idCategory = web3.toBigNumber(res.logs[0].topics[1]).toNumber();
+                        cb();
+                    });
+            });
+        }
+    ], function(err) {
+        if (err) return cb(err);
+        cb(null, idCategory);
+    });
+}
 
 function deploySingleChoice(web3, organizationAddr, definition, cb) {
     var owner;
@@ -135,7 +167,7 @@ function deploySingleChoice(web3, organizationAddr, definition, cb) {
                 definition.question,
                 definition.closeDelegateTime,
                 definition.closeTime,
-                definition.categoryId,
+                definition.idCategory,
                 singleChoice.address,
                 {
                     from: owner,
@@ -149,7 +181,7 @@ function deploySingleChoice(web3, organizationAddr, definition, cb) {
                         // log 0 -> PollAdded
                         //      topic 0 -> Event Name
                         //      topic 1 -> idSubmission
-                        idPoll = res.logs[0].topics[1];
+                        idPoll = web3.toBigNumber(res.logs[0].topics[1]).toNumber();
                         cb();
                     });
                 }

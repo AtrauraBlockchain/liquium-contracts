@@ -29,7 +29,7 @@ describe('Normal Scenario Liquium test', function(){
 
     before(function(done) {
 //        ethConnector.init('rpc', function(err) {
-        ethConnector.init('testrpc' ,{gasLimit: 4700000},function(err) {
+        ethConnector.init('testrpc' ,{gasLimit: 4712000},function(err) {
             if (err) return done(err);
             web3 = ethConnector.web3;
             owner = ethConnector.accounts[0];
@@ -52,7 +52,7 @@ describe('Normal Scenario Liquium test', function(){
         });
     });
     it('should deploy all the contracts ', function(done){
-        this.timeout(20000);
+        this.timeout(20000000);
 
         liquiumRT.deployOrganization(web3, ethConnector.accounts[0], {}, function(err, _organization) {
             assert.ifError(err);
@@ -62,7 +62,8 @@ describe('Normal Scenario Liquium test', function(){
         });
     });
     it('Should create a Category', function(done) {
-        organization.addCategory("Cat1", 0, {from: owner, gas: 1000000}, function(err) {
+        this.timeout(20000000);
+        liquiumRT.addCategory(web3, organization.address, "Cat1", 0, function(err, _idCategory) {
             assert.ifError(err);
             async.series([
                 function(cb) {
@@ -105,7 +106,7 @@ describe('Normal Scenario Liquium test', function(){
             options: ["Option1", "Option2", "Option3"],
             closeDelegateTime: closeDelegateTime,
             closeTime: closeTime,
-            categoryId: 1,
+            idCategory: 1,
         }, function(err, _singleChoice, _idPoll) {
             assert.ifError(err);
             assert.ok(_singleChoice.address);
