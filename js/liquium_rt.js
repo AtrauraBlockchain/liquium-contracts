@@ -143,7 +143,7 @@ function addDelegate(web3, organizationAddr, delegateName, delegateAccount, cb) 
     });
 }
 
-function deploySingleChoice(web3, organizationAddr, definition, cb) {
+function deploySingleChoice(web3, organizationAddr, title, definition, cb) {
     var owner;
     var idPoll;
     var singleChoice;
@@ -188,7 +188,7 @@ function deploySingleChoice(web3, organizationAddr, definition, cb) {
         },
         function(cb) {
             organization.addPoll(
-                definition.question,
+                title,
                 definition.closeDelegateTime,
                 definition.closeTime,
                 definition.idCategory,
@@ -276,7 +276,7 @@ function getPolls(web3,organizationAddr, cb) {
                     var poll = {
                         idPoll: idPoll,
                         pollType: pollType,
-                        description: res[1],
+                        title: res[1],
                         closeDelegateTime: res[2].toNumber(),
                         closeTime: res[3].toNumber(),
                         idCategory: res[4].toNumber(),
@@ -543,10 +543,14 @@ function getDelegations(web3, delegateStatusAddr, _voter, cb) {
 
 function toAddress(web3, a) {
     if (web3.isAddress(a)) return a;
-    var S = web3.toBigNumber(a).toString(16);
-    while (S.length < 40) S = "0" + S;
-    S="0x" +S;
-    return S;
+    try {
+        var S = web3.toBigNumber(a).toString(16);
+        while (S.length < 40) S = "0" + S;
+        S="0x" +S;
+        return S;
+    } catch (err) {
+        return "0x0";
+    }
 }
 
 function isDelegate(web3, voter) {

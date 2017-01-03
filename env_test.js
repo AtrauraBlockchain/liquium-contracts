@@ -57,9 +57,9 @@ var pollExample1 = {
     idCategory: 1
 };
 
-function addPoll(definition,cb) {
+function addPoll(title, definition,cb) {
     cb = cb || function() {};
-    liquiumRT.deploySingleChoice(web3, organization.address, definition, function(err, _singleChoice , _idPoll) {
+    liquiumRT.deploySingleChoice(web3, organization.address, title, definition, function(err, _singleChoice , _idPoll) {
         if (err) {
             console.log(err);
             return cb(err);
@@ -106,7 +106,7 @@ function deployExample(cb) {
             addCategory("Category1", cb);
         },
         function(cb) {
-            addPoll(pollExample1, cb);
+            addPoll("Poll1", pollExample1, cb);
         },
         function(cb) {
             addVoter(web3.eth.accounts[1], cb);

@@ -1,6 +1,6 @@
 {
   "name": "liquium-contracts",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "Contracts for Liquium project.",
   "main": "js/liquium_rt.js",
   "directories": {

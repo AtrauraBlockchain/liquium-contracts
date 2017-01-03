@@ -104,7 +104,7 @@ describe('Normal Scenario Liquium test', function(){
         this.timeout(200000000);
         var closeDelegateTime = now + 86400*7;
         var closeTime = now + 86400*14;
-        liquiumRT.deploySingleChoice(web3, organization.address, {
+        liquiumRT.deploySingleChoice(web3, organization.address,"Poll1", {
             question: "Question Example",
             options: ["Option1", "Option2", "Option3"],
             closeDelegateTime: closeDelegateTime,
@@ -165,7 +165,7 @@ describe('Normal Scenario Liquium test', function(){
                         var pollType = web3.toAscii(res[0]);
                         pollType = pollType.replace(/\0/g, '');
                         assert.equal(pollType, "SINGLE_CHOICE");
-                        assert.equal(res[1], "Question Example");
+                        assert.equal(res[1], "Poll1");
                         assert.equal(res[2], closeDelegateTime);
                         assert.equal(res[3], closeTime);
                         assert.equal(res[4], 1);

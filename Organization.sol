@@ -34,13 +34,13 @@ contract OrganizationInterface {
 
 
 // Interfce for organization owner
-      function addCategory(string _description, uint _parentCategory);
+      function addCategory(string _name, uint _parentCategory);
       function removeCategory(uint _idCategory);
 
       function addVoter(address _voter, uint _amount);
       function removeVoter(address _voter, uint _amount);
       function addPoll(
-        string _description,
+        string _title,
         uint _closeDelegateTime,
         uint _closeTime,
         uint _categoryId,
@@ -84,7 +84,7 @@ contract Organization is OrganizationInterface, Owned {
 
 
     struct Category {
-        string description;
+        string name;
         bool deleted;
         DelegateStatus delegateStatus;
         uint[] activePolls;
@@ -102,7 +102,7 @@ contract Organization is OrganizationInterface, Owned {
 
     struct Poll {
 
-        string description;
+        string title;
 
         uint closeDelegateTime;
         uint closeTime;
@@ -139,7 +139,7 @@ contract Organization is OrganizationInterface, Owned {
 
 
     function addPoll(
-        string _description,
+        string _title,
         uint _closeDelegateTime,
         uint _closeTime,
         uint _categoryId,
@@ -153,7 +153,7 @@ contract Organization is OrganizationInterface, Owned {
 
         uint idPoll = allPolls.length++;
         Poll p = allPolls[idPoll];
-        p.description = _description;
+        p.title = _title;
         p.closeDelegateTime = _closeDelegateTime;
         p.closeTime = _closeTime;
         p.idCategory = _categoryId;
@@ -424,7 +424,7 @@ contract Organization is OrganizationInterface, Owned {
 
     function polls(uint _idPoll) constant returns(
         bytes32 _pollType,
-        string _description,
+        string _title,
         uint _closeDelegateTime,
         uint _closeTime,
         uint _idCategory,
@@ -432,7 +432,7 @@ contract Organization is OrganizationInterface, Owned {
         address _delegateStatusAddr
     ) {
         Poll p = getPoll(_idPoll);
-        _description = p.description;
+        _title = p.title;
         _closeDelegateTime = p.closeDelegateTime;
         _closeTime = p.closeTime;
         _idCategory = p.idCategory;
@@ -541,9 +541,9 @@ contract Organization is OrganizationInterface, Owned {
         d.deleted = true;
     }
 
-    function addCategory(string _description, uint _parentCategory) onlyOwner {
+    function addCategory(string _name, uint _parentCategory) onlyOwner {
         Category c = categories[categories.length++];
-        c.description = _description;
+        c.name = _name;
         if (_parentCategory > 0) {
             Category p = getCategory(_parentCategory);
             c.delegateStatus = delegateStatusFactory.createDelegateStatus(p.delegateStatus);
