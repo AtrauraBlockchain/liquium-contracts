@@ -120,7 +120,7 @@ contract Organization is OrganizationInterface, Owned {
     struct Delegate {
         string name;
         address owner;
-        bool removed;
+        bool deleted;
     }
 
     Delegate[] public delegates;
@@ -147,6 +147,7 @@ contract Organization is OrganizationInterface, Owned {
     {
         var c = categories[_categoryId];
         if (address(c.delegateStatus) == 0) throw; // Invalid category
+        if (c.deleted) throw;
         if (now + MIN_TIME_FINAL_VOTING > _closeTime) throw;
         if (_closeTime < _closeDelegateTime + MIN_TIME_FINAL_VOTING) throw;
 
@@ -312,13 +313,13 @@ contract Organization is OrganizationInterface, Owned {
             if (!isDelegate(address(delegate))) return false;
             c.delegateStatus.setDelegate(_voter,address(delegate));
             for (j=0; j<c.activePolls.length; j++) {
-                Poll p = allPolls[c.activePolls[i]];
+                Poll p = allPolls[c.activePolls[j]];
                 if (now < p.closeTime ) {
                     if (!hasVoted(p, _voter)) {
                         doSetDelegateSinglePoll(p, _voter, delegate);
                     }
                 } else {
-                    c.activePolls[i] = c.activePolls[c.activePolls.length-1];
+                    c.activePolls[j] = c.activePolls[c.activePolls.length-1];
                     c.activePolls.length --;
                     j--;
                 }
@@ -452,10 +453,15 @@ contract Organization is OrganizationInterface, Owned {
         d = delegates[_idDelegate];
     }
 
+    function nDelegates() constant returns(uint) {
+        return delegates.length-1;
+    }
+
     function addVoter(address _voter, uint _amount) onlyOwner {
         uint i;
         uint j;
         address delegate;
+        Poll p;
 
         balances[_voter] += _amount;
         totalSupply += _amount;
@@ -465,8 +471,9 @@ contract Organization is OrganizationInterface, Owned {
             if (delegate!=0) {
                 p.delegateStatus.setDelegate(_voter, delegate);
             }
+
             for (j=0; j<c.activePolls.length; j++) {
-                Poll p = allPolls[c.activePolls[i]];
+                p = allPolls[c.activePolls[j]];
                 if (now < p.closeTime ) {
                     if (p.votes[_voter].time != 0) {
                         deltaVote(p, _voter, int(_amount));
@@ -477,7 +484,7 @@ contract Organization is OrganizationInterface, Owned {
                         }
                     }
                 } else {
-                    c.activePolls[i] = c.activePolls[c.activePolls.length-1];
+                    c.activePolls[j] = c.activePolls[c.activePolls.length-1];
                     c.activePolls.length --;
                     j--;
                 }
@@ -500,7 +507,7 @@ contract Organization is OrganizationInterface, Owned {
                 p.delegateStatus.setDelegate(_voter, delegate);
             }
             for (j=0; j<c.activePolls.length; j++) {
-                Poll p = allPolls[c.activePolls[i]];
+                Poll p = allPolls[c.activePolls[j]];
                 if (now < p.closeTime ) {
                     if (p.votes[_voter].time != 0) {
                         deltaVote(p, _voter, -int(_amount));
@@ -511,7 +518,7 @@ contract Organization is OrganizationInterface, Owned {
                         }
                     }
                 } else {
-                    c.activePolls[i] = c.activePolls[c.activePolls.length-1];
+                    c.activePolls[j] = c.activePolls[c.activePolls.length-1];
                     c.activePolls.length --;
                     j--;
                 }
@@ -520,16 +527,18 @@ contract Organization is OrganizationInterface, Owned {
     }
 
     function addDelegate(string _name) returns(uint _idDelegate) {
-        Delegate d = delegates[delegates.length++];
+        uint idDelegate = delegates.length++;
+        Delegate d = delegates[idDelegate];
         d.name = _name;
         d.owner = msg.sender;
-        return delegates.length -1;
+        DelegateAdded(idDelegate);
+        return idDelegate;
     }
 
     function removeDelegate(uint _idDelegate) {
         Delegate d = getDelegate(_idDelegate);
         if (d.owner != msg.sender) throw;
-        d.removed = true;
+        d.deleted = true;
     }
 
     function addCategory(string _description, uint _parentCategory) onlyOwner {
@@ -626,6 +635,7 @@ contract Organization is OrganizationInterface, Owned {
 // Events
 
     event PollAdded(uint indexed idPoll);
+    event DelegateAdded(uint indexed idDelegate);
     event CategoryAdded(uint indexed idCategory);
 }
 

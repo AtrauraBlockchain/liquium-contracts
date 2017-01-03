@@ -7,7 +7,9 @@ var ethConnector = require('ethconnector');
 var web3;
 var path = require('path');
 
-var assert = require("assert"); // node.js core module
+
+// node.js core module
+var assert = require("assert");
 var async = require('async');
 
 var verbose = true;
@@ -16,29 +18,29 @@ describe('Normal Scenario Liquium test', function(){
     var organization;
     var owner;
     var voter1;
-//    var voter2;
-//    var voter3;
+    var voter2;
+    var voter3;
     var delegate1;
-//    var delegate2;
-//    var delegate3;
+    var delegate2;
+    var delegate3;
     var singleChoice;
     var idPoll;
+    var idCategory;
     var delegateStatus;
     var ballots = [];
     var now = Math.floor(new Date().getTime() /1000);
 
     before(function(done) {
-//        ethConnector.init('rpc', function(err) {
         ethConnector.init('testrpc' ,{gasLimit: 4712000},function(err) {
             if (err) return done(err);
             web3 = ethConnector.web3;
             owner = ethConnector.accounts[0];
             voter1 = ethConnector.accounts[1];
-//            voter2 = ethConnector.accounts[2];
-//            voter3 = ethConnector.accounts[3];
+            voter2 = ethConnector.accounts[2];
+            voter3 = ethConnector.accounts[3];
             delegate1 = ethConnector.accounts[4];
-//            delegate2 = ethConnector.accounts[5];
-//            delegate3 = ethConnector.accounts[6];
+            delegate2 = ethConnector.accounts[5];
+            delegate3 = ethConnector.accounts[6];
             done();
         });
     });
@@ -65,6 +67,7 @@ describe('Normal Scenario Liquium test', function(){
         this.timeout(20000000);
         liquiumRT.addCategory(web3, organization.address, "Cat1", 0, function(err, _idCategory) {
             assert.ifError(err);
+            idCategory = _idCategory;
             async.series([
                 function(cb) {
                     organization.nCategories(function(err, res) {
@@ -424,7 +427,31 @@ describe('Normal Scenario Liquium test', function(){
         });
     });
 
+    it('Should add another voter', function(done) {
+        organization.addVoter(voter2, web3.toWei(1), {from: owner, gas: 400000},function(err) {
+            assert.ifError(err);
+            async.series([
+                function(cb) {
+                    organization.balanceOf(voter2, function(err, res) {
+                        assert.ifError(err);
+                        assert.equal(web3.fromWei(res).toNumber(), 1);
+                        cb();
+                    });
+                },
+            ],done);
+        });
+    });
+
 /*
+    it("Should get voter status",function(done) {
+        this.timeout(200000000);
+        liquiumRT.getAllInfo(web3, organization.address, voter1, function(err, _st) {
+            log(JSON.stringify(_st, null, 2));
+            done();
+        });
+    });
+*/
+
     function bcDelay(secs, cb) {
         send("evm_increaseTime", [secs], function(err, result) {
             if (err) return cb(err);
@@ -436,13 +463,13 @@ describe('Normal Scenario Liquium test', function(){
             });
         });
     }
-*/
+
     function log(S) {
         if (verbose) {
             console.log(S);
         }
     }
-/*
+
         // CALL a low level rpc
     function send(method, params, callback) {
         if (typeof params == "function") {
@@ -457,8 +484,8 @@ describe('Normal Scenario Liquium test', function(){
           id: new Date().getTime()
         }, callback);
     }
-*/
-/*
+
+
     function printTests(cb) {
         async.series([
             function(cb) {
@@ -477,5 +504,5 @@ describe('Normal Scenario Liquium test', function(){
             }
         ],cb);
     }
-*/
+
 });

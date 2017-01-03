@@ -1,3 +1,4 @@
+"use strict";
 
 var Web3 = require('web3');
 // create an instance of web3 using the HTTP provider.
@@ -9,11 +10,14 @@ var BigNumber = require('bignumber.js');
 var eth = web3.eth;
 var async = require('async');
 
-liquiumRT = require('./js/liquium_rt.js');
+var liquiumRT = require('./js/liquium_rt.js');
 
 
 var organization;
 var singleChoice;
+var idCategory;
+var idDelegate;
+var idPoll;
 
 function deployOrganization(cb) {
     cb = cb || function() {};
@@ -41,7 +45,7 @@ function addCategory(catName, cb) {
     });
 }
 
-pollExample1 = {
+var pollExample1 = {
     question: "Question 1",
     options: [
         "Option1",
@@ -67,6 +71,31 @@ function addPoll(definition,cb) {
     });
 }
 
+function addVoter(account, cb) {
+    cb = cb || function() {};
+    organization.addVoter(account, web3.toWei(1), {from: eth.accounts[0], gas:500000}, function(err, res) {
+        if (err) {
+            console.log(err);
+            return cb(err);
+        }
+        console.log("Voter added");
+        cb();
+    });
+}
+
+function addDelegate(name, account, cb) {
+    cb = cb || function() {};
+    liquiumRT.addDelegate(web3, organization.address, name, account, function(err, _idDelegate) {
+        if (err) {
+            console.log(err);
+            return cb(err);
+        }
+        idDelegate = _idDelegate;
+        console.log("Delegate created correctly. idDelegate = " + idDelegate);
+        cb();
+    });
+}
+
 function deployExample(cb) {
     cb = cb || function() {};
     async.series([
@@ -78,9 +107,14 @@ function deployExample(cb) {
         },
         function(cb) {
             addPoll(pollExample1, cb);
+        },
+        function(cb) {
+            addVoter(web3.eth.accounts[1], cb);
+        },
+        function(cb) {
+            addDelegate("Delegate1", web3.eth.accounts[2], cb);
         }
     ], cb);
 }
-
 
 
