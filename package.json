@@ -1,13 +1,14 @@
 {
   "name": "liquium-contracts",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "Contracts for Liquium project.",
-  "main": "js/liquium_rt.js",
+  "main": "js/index.js",
   "directories": {
     "test": "test"
   },
   "scripts": {
-    "test": "mocha"
+    "test": "mocha",
+    "build": "./build"
   },
   "repository": {
     "type": "git",
@@ -25,6 +26,14 @@
     "ethereum",
     "blockchain"
   ],
+  "browserify": {
+    "transform": [ "browserify-shim" ]
+  },
+  "browserify-shim": {
+    "web3": "global:web3",
+    "lodash": "global:_",
+    "async": "global:async"
+  },
   "author": "Jordi Baylina",
   "license": "GPL-3.0",
   "bugs": {
@@ -32,7 +41,10 @@
   },
   "homepage": "https://github.com/AtrauraBlockchain/liquium-contracts",
   "devDependencies": {
-    "ethconnector": "^0.0.20"
+    "browserify-shim": "^3.8.12",
+    "ethconnector": "^0.0.20",
+    "gulp": "^3.9.1",
+    "gulp-browserify": "^0.5.1"
   },
   "dependencies": {
     "async": "^2.1.4",

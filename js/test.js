@@ -12,7 +12,7 @@ var async = require('async');
 
 var liquiumRT = require('./liquium_rt.js');
 
-var organizationAddr = '0x2b45adfe90e57158a1fddd9c19fed7855c8589eb';
+var organizationAddr = '0x5b1869d9a4c187f2eaa108f3062412ecf0526b24';
 liquiumRT.getAllInfo(web3, organizationAddr, eth.accounts[1], function(err,st) {
     if (err) {
         console.log(err);

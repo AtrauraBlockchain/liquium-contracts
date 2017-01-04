@@ -1,0 +1,7 @@
+#!/bin/bash
+rm liquium-contracts-debug.js
+rm liquium-contracts.js
+browserify index.js -d >liquium-contracts-debug.js
+browserify index.js | uglifyjs >liquium-contracts.js
+
+
