@@ -9,11 +9,11 @@ We've built a template for organizations which want to integrate a public, fair 
 This smart contacts define the data structures and the functionalities of the Liquium polling system.
 
 In this contracts are represented:
-- Organizations.
-- Categories.
-- Polls.
-- Voters.
-- Delegates.
+- Organizations
+- Categories
+- Polls
+- Voters
+- Delegates
 
 
 ![banner](https://s30.postimg.org/rd8670hi9/Pasted_image_at_2017_01_03_04_52_PM_1.png)
