@@ -601,7 +601,7 @@ function getVoterVote(web3, organizationAddr, idPoll, _voter, cb) {
                             });
                             totalAmount = totalAmount.add(res[1]);
                         }
-
+                        i+=1;
                         cb();
                     });
 
@@ -660,7 +660,7 @@ function getDelegateVote(web3, organizationAddr, idPoll, _voter, cb) {
                             });
                             totalAmount = totalAmount.add(res[1]);
                         }
-
+                        i+=1;
                         cb();
                     });
 
