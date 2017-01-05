@@ -1,0 +1,29 @@
+{
+  "name": "liquium-contracts",
+  "description": "Contracts for Liquium project.",
+  "main": "liquium-contracts.js",
+  "authors": [
+    "Jordi Baylina"
+  ],
+  "license": "GPL-3.0",
+  "keywords": [
+    "liquium",
+    "liquid",
+    "democracy",
+    "solidity",
+    "smart",
+    "contract",
+    "poll",
+    "voting",
+    "ethereum",
+    "blockchain"
+  ],
+  "homepage": "https://github.com/AtrauraBlockchain/liquium-contracts",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ]
+}
