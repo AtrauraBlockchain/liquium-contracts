@@ -4,6 +4,8 @@ Liquium is an Open Source polling framework based in Smart Contracts running in 
 
 We've built a template for organizations which want to integrate a public, fair and transparent polling system, so they can modify it for their own context just forking this and its brother repositories.
 
+You can know more about Liquium in our [wiki](https://github.com/AtrauraBlockchain/liquium-contracts/wiki/About-Liquium).
+
 # Liquium Smart Contracts
 
 This smart contacts define the data structures and the functionalities of the Liquium polling system.
