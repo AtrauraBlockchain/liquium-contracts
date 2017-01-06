@@ -21,6 +21,37 @@ module.exports.getCategoriesDelegations = getCategoriesDelegations;
 module.exports.getPollsStatus = getPollsStatus;
 module.exports.getAllInfo = getAllInfo;
 
+module.exports.waitTx = waitTx;
+
+function waitTx(web3, txHash, cb) {
+    if (!web3.waitTx_filter) {
+        web3.waitTxPendingTx = [];
+        web3.waitTxFilter = web3.eth.filter('latest', function() {
+            var curPendingTx = web3.waitTxPendingTx;
+            web3.waitTxPendingTx = [];
+            async.eachSeries(curPendingTx, checkTx);
+        });
+    }
+    checkTx({
+        web3: web3,
+        txHash: txHash,
+        cb: cb
+    }, function() {});
+
+    function checkTx(tx, cb) {
+        web3.eth.getTransactionReceipt(tx.txHash, function(err, res) {
+            if (err) return cb(err);
+            if (res) {
+                tx.cb(null, res);
+            } else {
+                web3.waitTxPendingTx.push(tx);
+            }
+            cb();
+        });
+    }
+
+}
+
 function deployOrganization (web3, account, opts, cb) {
     var organization;
     return async.series([
@@ -110,7 +141,7 @@ function addCategory(web3, organizationAddr, categoryName, idCateoryParent, cb) 
             organization.addCategory(categoryName, idCateoryParent, { from: owner, gas: 1000000}, function(err, txHash) {
                 if (err) return cb(err);
 
-                    web3.eth.getTransactionReceipt(txHash, function(err, res) {
+                    waitTx(web3,txHash, function(err, res) {
                         if (err) return cb(err);
                         // log 0 -> CategoryAdded
                         //      topic 0 -> Event Name
@@ -132,7 +163,7 @@ function addDelegate(web3, organizationAddr, delegateName, delegateAccount, cb) 
     organization.addDelegate(delegateName, { from: delegateAccount, gas: 1000000}, function(err, txHash) {
         if (err) return cb(err);
 
-        web3.eth.getTransactionReceipt(txHash, function(err, res) {
+        waitTx(web3,txHash, function(err, res) {
             if (err) return cb(err);
             // log 0 -> CategoryAdded
             //      topic 0 -> Event Name
@@ -201,7 +232,7 @@ function deploySingleChoice(web3, organizationAddr, title, definition, cb) {
                     if (err) return cb(err);
 
 
-                    web3.eth.getTransactionReceipt(txHash, function(err, res) {
+                    waitTx(web3,txHash, function(err, res) {
                         // log 0 -> PollAdded
                         //      topic 0 -> Event Name
                         //      topic 1 -> idSubmission
