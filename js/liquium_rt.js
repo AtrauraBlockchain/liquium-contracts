@@ -10,7 +10,9 @@ module.exports.deployOrganization = deployOrganization;
 module.exports.deployDelegateStatusFactory = deployDelegateStatusFactory;
 module.exports.getSingleChoiceParams = getSingleChoiceParams;
 module.exports.addCategory = addCategory;
+module.exports.removeCategory = removeCategory;
 module.exports.addDelegate = addDelegate;
+module.exports.removeDelegate = removeCategory;
 module.exports.deploySingleChoice = deploySingleChoice;
 
 module.exports.getPolls = getPolls;
@@ -157,6 +159,37 @@ function addCategory(web3, organizationAddr, categoryName, idCateoryParent, cb) 
     });
 }
 
+function removeCategory(web3, organizationAddr, idCategory, cb) {
+    var owner;
+    var organization = web3.eth.contract(interfaces.organizationAbi).at(organizationAddr);
+
+    return async.series([
+        function(cb) {
+            organization.owner(function(err, res) {
+                if (err) return cb(err);
+                owner = res;
+                cb();
+            });
+        },
+        function(cb) {
+            organization.removeCategory(idCategory, { from: owner, gas: 500000}, function(err, txHash) {
+                if (err) return cb(err);
+
+                    waitTx(web3,txHash, function(err, res) {
+                        if (err) return cb(err);
+                        // log 0 -> CategoryAdded
+                        //      topic 0 -> Event Name
+                        //      topic 1 -> idSubmission
+                        cb();
+                    });
+            });
+        }
+    ], function(err) {
+        if (err) return cb(err);
+        cb(null, idCategory);
+    });
+}
+
 
 function addDelegate(web3, organizationAddr, delegateName, delegateAccount, cb) {
     var organization = web3.eth.contract(interfaces.organizationAbi).at(organizationAddr);
@@ -170,6 +203,21 @@ function addDelegate(web3, organizationAddr, delegateName, delegateAccount, cb) 
             //      topic 1 -> idSubmission
             var idDelegate = web3.toBigNumber(res.logs[0].topics[1]).toNumber();
             cb(null, idDelegate);
+        });
+    });
+}
+
+function removeDelegate(web3, organizationAddr, idDelegate, delegateAccount, cb) {
+    var organization = web3.eth.contract(interfaces.organizationAbi).at(organizationAddr);
+    organization.removeDelegate(idDelegate, { from: delegateAccount, gas: 1000000}, function(err, txHash) {
+        if (err) return cb(err);
+
+        waitTx(web3,txHash, function(err, res) {
+            if (err) return cb(err);
+            // log 0 -> CategoryAdded
+            //      topic 0 -> Event Name
+            //      topic 1 -> idSubmission
+            cb(null);
         });
     });
 }
