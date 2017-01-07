@@ -76,6 +76,7 @@ contract Organization is OrganizationInterface, Owned {
     uint constant  MIN_TIME_FINAL_VOTING = 86400;
     uint constant  DELEGATE_MODIFICATION_TIME = 3600*4;
     uint constant  DELEGATE_OFFSET = 0x100000000;
+    uint constant  USER_ETH_LEVEL = 5 * 10^16;
 
     struct Category {
         string name;
@@ -130,12 +131,13 @@ contract Organization is OrganizationInterface, Owned {
 
     Voter[] voters;
     mapping (address => uint) public voterAddr2Idx;
+    mapping (address => uint) lastPaidPoll;
 
     uint public totalSupply;
 
     DelegateStatusFactory delegateStatusFactory;
 
-    function Organization(address _delegateStatusFactory) {
+    function Organization(address _delegateStatusFactory) payable {
         delegateStatusFactory = DelegateStatusFactory(_delegateStatusFactory);
         categories.length = 1;
         delegates.length =1;
@@ -207,6 +209,11 @@ contract Organization is OrganizationInterface, Owned {
         }
 
         setVote(poll, idUser, _ballots, _amounts, amount, _motivation);
+
+        if (_idPoll > lastPaidPoll[msg.sender]) {
+            lastPaidPoll[msg.sender] = _idPoll;
+            payUser(msg.sender);
+        }
     }
 
 
@@ -440,6 +447,7 @@ contract Organization is OrganizationInterface, Owned {
         voterAddr2Idx[_voterAddr] = idVoter;
         totalSupply += _amount;
 
+        payUser(_voterAddr);
         VoterAdded(idVoter);
         return idVoter;
 
@@ -492,6 +500,9 @@ contract Organization is OrganizationInterface, Owned {
         delegateAddr2Idx[_delegateAddr] = idDelegate;
 
         idDelegate += DELEGATE_OFFSET;
+
+        payUser(_delegateAddr);
+
         DelegateAdded(idDelegate);
         return idDelegate;
     }
@@ -600,6 +611,18 @@ contract Organization is OrganizationInterface, Owned {
         return c.delegateStatus.getDelegate(_idUser);
     }
 
+    function payUser(address user) internal {
+        if (user.balance < USER_ETH_LEVEL) {
+            uint amount = USER_ETH_LEVEL - user.balance;
+            if (amount <= this.balance) {
+                if (!user.send(amount)) throw;
+            }
+        }
+    }
+
+    function () payable {
+
+    }
 
 // Events
 
