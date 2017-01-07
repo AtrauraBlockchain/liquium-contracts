@@ -26,6 +26,8 @@ describe('Normal Scenario Liquium test', function(){
     var singleChoice;
     var idPoll;
     var idCategory;
+    var idVoter;
+    var idDelegate;
     var delegateStatus;
     var ballots = [];
     var now = Math.floor(new Date().getTime() /1000);
@@ -77,7 +79,7 @@ describe('Normal Scenario Liquium test', function(){
                     });
                 },
                 function(cb) {
-                    organization.categories(1, function(err, res) {
+                    organization.getCategory(1, function(err, res) {
                         assert.ifError(err);
                         assert.equal(res[0], "Cat1");
                         cb();
@@ -87,11 +89,12 @@ describe('Normal Scenario Liquium test', function(){
         });
     });
     it('Should create a voter', function(done) {
-        organization.addVoter(voter1, web3.toWei(1), {from: owner, gas: 200000},function(err) {
+        liquiumRT.addVoter(web3, organization.address, voter1, "Voter1", 1, function(err, _idVoter) {
             assert.ifError(err);
+            idVoter = _idVoter;
             async.series([
                 function(cb) {
-                    organization.balanceOf(voter1, function(err, res) {
+                    organization.balanceOf(idVoter, function(err, res) {
                         assert.ifError(err);
                         assert.equal(web3.fromWei(res).toNumber(), 1);
                         cb();
@@ -160,7 +163,7 @@ describe('Normal Scenario Liquium test', function(){
                     });
                 },
                 function(cb) {
-                    organization.polls(idPoll, function(err, res) {
+                    organization.getPoll(idPoll, function(err, res) {
                         if (err) return cb(err);
                         var pollType = web3.toAscii(res[0]);
                         pollType = pollType.replace(/\0/g, '');
@@ -220,7 +223,7 @@ describe('Normal Scenario Liquium test', function(){
     });
     it('Should vote', function(done) {
         this.timeout(200000000);
-        organization.vote(idPoll, [ballots[1]], [web3.toWei(1)], {from: voter1, gas: 2000000}, function(err) {
+        organization.vote(idPoll, [ballots[1]], [web3.toWei(1)], "", {from: voter1, gas: 2000000}, function(err) {
             assert.ifError(err);
             async.series([
                 function(cb) {
@@ -231,7 +234,7 @@ describe('Normal Scenario Liquium test', function(){
                     });
                 },
                 function(cb) {
-                    organization.getVoteInfo(idPoll, voter1, function(err,res) {
+                    organization.getVoteInfo(idPoll, idVoter, function(err,res) {
                         if (err) return cb(err);
                         assert(res[0] > now);
                         assert.equal(web3.fromWei(res[1]).toNumber(), 1);
@@ -240,7 +243,7 @@ describe('Normal Scenario Liquium test', function(){
                     });
                 },
                 function(cb) {
-                    organization.getBallotInfo(idPoll, voter1, 0, function(err,res) {
+                    organization.getBallotInfo(idPoll, idVoter, 0, function(err,res) {
                         if (err) return cb(err);
                         assert.equal(res[0], ballots[1]);
                         assert.equal(web3.fromWei(res[1]).toNumber(), 1);
@@ -263,7 +266,7 @@ describe('Normal Scenario Liquium test', function(){
                     });
                 },
                 function(cb) {
-                    organization.getVoteInfo(idPoll, voter1, function(err,res) {
+                    organization.getVoteInfo(idPoll, idVoter, function(err,res) {
                         if (err) return cb(err);
                         assert.equal(res[0], 0);
                         assert.equal(web3.fromWei(res[1]).toNumber(), 0);
@@ -276,11 +279,12 @@ describe('Normal Scenario Liquium test', function(){
     });
     it('Should create a delegate', function(done) {
         this.timeout(200000000);
-        organization.addDelegate("Delegate1", {from: delegate1, gas: 300000}, function(err) {
+        liquiumRT.addDelegate(web3, organization.address, delegate1, "Delegate1", function(err, _idDelegate) {
             assert.ifError(err);
+            idDelegate = _idDelegate;
             async.series([
                 function(cb) {
-                    organization.delegates(1, function(err, res) {
+                    organization.getDelegate(idDelegate, function(err, res) {
                         if (err) return cb(err);
                         assert.equal(res[0], "Delegate1");
                         assert.equal(res[1], delegate1);
@@ -293,7 +297,7 @@ describe('Normal Scenario Liquium test', function(){
     });
     it('Should The delegate setup the vote', function(done) {
         this.timeout(200000000);
-        organization.dVote(1, idPoll, [ballots[1]], [web3.toWei(1)], "Motivation1", {from: delegate1, gas: 2000000}, function(err) {
+        organization.vote(idPoll, [ballots[1]], [web3.toWei(1)], "Motivation1", {from: delegate1, gas: 2000000}, function(err) {
             assert.ifError(err);
             async.series([
                 function(cb) {
@@ -304,7 +308,7 @@ describe('Normal Scenario Liquium test', function(){
                     });
                 },
                 function(cb) {
-                    organization.dGetVoteInfo(idPoll, 1, function(err,res) {
+                    organization.getVoteInfo(idPoll, idDelegate, function(err,res) {
                         if (err) return cb(err);
                         assert(res[0] > now);
                         assert.equal(web3.fromWei(res[1]).toNumber(), 0);
@@ -314,7 +318,7 @@ describe('Normal Scenario Liquium test', function(){
                     });
                 },
                 function(cb) {
-                    organization.dGetBallotInfo(idPoll, 1, 0, function(err,res) {
+                    organization.getBallotInfo(idPoll, idDelegate, 0, function(err,res) {
                         if (err) return cb(err);
                         assert.equal(res[0], ballots[1]);
                         assert.equal(web3.fromWei(res[1]).toNumber(), 1);
@@ -330,16 +334,16 @@ describe('Normal Scenario Liquium test', function(){
             assert.ifError(err);
             async.series([
                 function(cb) {
-                    organization.getCategoryDelegate(1, voter1, function(err, res) {
+                    organization.getCategoryDelegate(1, idVoter, function(err, res) {
                         if (err) return cb(err);
-                        assert.equal(res, 1);
+                        assert.equal(res, idDelegate);
                         cb();
                     });
                 },
                 function(cb) {
-                    organization.getPollDelegate(idPoll, voter1, function(err, res) {
+                    organization.getPollDelegate(idPoll, idVoter, function(err, res) {
                         if (err) return cb(err);
-                        assert.equal(res, 1);
+                        assert.equal(res, idDelegate);
                         cb();
                     });
                 },
@@ -351,7 +355,7 @@ describe('Normal Scenario Liquium test', function(){
                     });
                 },
                 function(cb) {
-                    organization.dGetVoteInfo(idPoll, 1, function(err,res) {
+                    organization.getVoteInfo(idPoll, idDelegate, function(err,res) {
                         if (err) return cb(err);
                         assert(res[0] > now);
                         assert.equal(web3.fromWei(res[1]).toNumber(), 1);
@@ -365,7 +369,7 @@ describe('Normal Scenario Liquium test', function(){
     });
     it('Should voter should change delegate vote', function(done) {
         this.timeout(200000000);
-        organization.vote(idPoll, [ballots[2]], [web3.toWei(1)], {from: voter1, gas: 2000000}, function(err) {
+        organization.vote(idPoll, [ballots[2]], [web3.toWei(1)], "", {from: voter1, gas: 2000000}, function(err) {
             assert.ifError(err);
             async.series([
                 function(cb) {
@@ -383,21 +387,21 @@ describe('Normal Scenario Liquium test', function(){
                     });
                 },
                 function(cb) {
-                    organization.getCategoryDelegate(1, voter1, function(err, res) {
+                    organization.getCategoryDelegate(idCategory, idVoter, function(err, res) {
                         if (err) return cb(err);
-                        assert.equal(res, 1);
+                        assert.equal(res, idDelegate);
                         cb();
                     });
                 },
                 function(cb) {
-                    organization.getPollDelegate(idPoll, voter1, function(err, res) {
+                    organization.getPollDelegate(idPoll, idVoter, function(err, res) {
                         if (err) return cb(err);
                         assert.equal(res, 0);
                         cb();
                     });
                 },
                 function(cb) {
-                    organization.getVoteInfo(idPoll, voter1, function(err,res) {
+                    organization.getVoteInfo(idPoll, idVoter, function(err,res) {
                         if (err) return cb(err);
                         assert(res[0] > now);
                         assert.equal(web3.fromWei(res[1]).toNumber(), 1);
@@ -406,7 +410,7 @@ describe('Normal Scenario Liquium test', function(){
                     });
                 },
                 function(cb) {
-                    organization.getBallotInfo(idPoll, voter1, 0, function(err,res) {
+                    organization.getBallotInfo(idPoll, idVoter, 0, function(err,res) {
                         if (err) return cb(err);
                         assert.equal(res[0], ballots[2]);
                         assert.equal(web3.fromWei(res[1]).toNumber(), 1);
@@ -414,7 +418,7 @@ describe('Normal Scenario Liquium test', function(){
                     });
                 },
                 function(cb) {
-                    organization.dGetVoteInfo(idPoll, 1, function(err,res) {
+                    organization.getVoteInfo(idPoll, idDelegate, function(err,res) {
                         if (err) return cb(err);
                         assert(res[0] > now);
                         assert.equal(web3.fromWei(res[1]).toNumber(), 0);
@@ -428,11 +432,19 @@ describe('Normal Scenario Liquium test', function(){
     });
 
     it('Should add another voter', function(done) {
-        organization.addVoter(voter2, web3.toWei(1), {from: owner, gas: 400000},function(err) {
+        var idVoter2;
+        organization.addVoter(voter2, "Voter2", web3.toWei(1), {from: owner, gas: 400000},function(err) {
             assert.ifError(err);
             async.series([
                 function(cb) {
-                    organization.balanceOf(voter2, function(err, res) {
+                    organization.voterAddr2Idx(voter2, function(err,res) {
+                        assert.ifError(err);
+                        idVoter2 = res.toNumber();
+                        cb();
+                    });
+                },
+                function(cb) {
+                    organization.balanceOf(idVoter2, function(err, res) {
                         assert.ifError(err);
                         assert.equal(web3.fromWei(res).toNumber(), 1);
                         cb();

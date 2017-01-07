@@ -20,10 +20,12 @@ pragma solidity ^0.4.6;
 import "Owned.sol";
 
 contract Token {
-    function balanceOf(address a) constant returns(uint);
+    function balanceOf(uint idVoter) constant returns(uint);
 }
 
 contract DelegateStatus is Owned {
+
+    uint constant  DELEGATE_OFFSET = 0x100000000;
 
     /// @dev `Checkpoint` is the structure that attaches a block number to the a
     ///  given value
@@ -36,8 +38,8 @@ contract DelegateStatus is Owned {
         uint128 value;
     }
 
-    mapping (address => Checkpoint[]) votingPower;
-    mapping (address => Checkpoint[]) delegate;
+    mapping (uint => Checkpoint[]) votingPower;
+    mapping (uint => Checkpoint[]) delegate;
 
     uint creationBlock;
     DelegateStatus parent;
@@ -48,84 +50,84 @@ contract DelegateStatus is Owned {
         creationBlock = block.number;
     }
 
-    function getVotingPower(address _voter) constant returns(uint) {
-        return getVotingPowerAt(_voter, block.number);
+    function getVotingPower(uint _idUser) constant returns(uint) {
+        return getVotingPowerAt(_idUser, block.number);
     }
 
-    function getVotingPowerAt(address _voter, uint _block) constant returns(uint) {
-        if (isDelegate(_voter)) {
+    function getVotingPowerAt(uint  _idUser, uint _block) constant returns(uint) {
+        if (isDelegate(_idUser)) {
 
-            if (    (votingPower[_voter].length == 0)
-                 || (votingPower[_voter][0].fromBlock > _block))
+            if (    (votingPower[_idUser].length == 0)
+                 || (votingPower[_idUser][0].fromBlock > _block))
             {
                 if ((address(parent) != 0)&&(_block>=creationBlock)) {
-                    return parent.getVotingPowerAt(_voter, creationBlock);
+                    return parent.getVotingPowerAt(_idUser, creationBlock);
                 } else {
                     return 0;
                 }
             }
-            return getValueAt(votingPower[_voter], _block);
+            return getValueAt(votingPower[_idUser], _block);
         } else {
-            return Token(owner).balanceOf(_voter);
+            return Token(owner).balanceOf(_idUser);
         }
     }
 
 
-    function setDelegate(address _voter, address _delegate) {
+    function setDelegate(uint _idUser, uint _idDelegate) {
 
-        if (getDelegate(_voter) == _delegate) return;
+        if (getDelegate(_idUser) == _idDelegate) return;
 
-        undelegate(_voter);
+        undelegate(_idUser);
 
-        if (_delegate == 0) return;
+        if (_idDelegate == 0) return;
 
-        uint amount = getVotingPower(_voter);
+        uint amount = getVotingPower(_idUser);
 
-        address it = _delegate;
-        address finalDelegate;
+        uint it = _idDelegate;
+        uint finalDelegate;
         while (it != 0) {
             finalDelegate = it;
-            if (it == _voter) throw; // Do not allow cyclic delegations
+            if (it == _idUser) throw; // Do not allow cyclic delegations
             updateValueAtNow(votingPower[finalDelegate], getVotingPower(finalDelegate) + amount);
             it = getDelegate(it);
         }
 
         if (finalDelegate == 0) return;
 
-        updateValueAtNow(delegate[_voter], uint(_delegate));
+        updateValueAtNow(delegate[_idUser], uint(_idDelegate));
     }
 
-    function getDelegate(address _voter) constant returns (address _delegate) {
-        return getDelegateAt(_voter, block.number);
+    function getDelegate(uint _idUser) constant returns (uint _idDelegate) {
+        return getDelegateAt(_idUser, block.number);
     }
 
-    function getDelegateAt(address _voter, uint _block) constant returns (address _delegate) {
-        if (    (delegate[_voter].length == 0)
-             || (delegate[_voter][0].fromBlock > _block))
+    function getDelegateAt(uint _idUser, uint _block) constant returns (uint _idDelegate) {
+        if (    (delegate[_idUser].length == 0)
+             || (delegate[_idUser][0].fromBlock > _block))
         {
             if ((address(parent) != 0)&&(_block>=creationBlock)) {
-                return parent.getDelegateAt(_voter, creationBlock);
+                return parent.getDelegateAt(_idUser, creationBlock);
             } else {
                 return 0;
             }
         }
-        return address(getValueAt(delegate[_voter], _block));
+        return getValueAt(delegate[_idUser], _block);
     }
 
-    function getFinalDelegate(address _voter) constant returns (address _finalDelegate) {
-        address it = getDelegate(_voter);
+    function getFinalDelegate(uint _idUser) constant returns (uint _finalDelegate) {
+        uint it = getDelegate(_idUser);
         while (it != 0) {
             _finalDelegate = it;
             it = getDelegate(it);
         }
     }
 
-    function undelegate(address _voter) {
+    function undelegate(uint _idUser) {
 
-        uint amount = getVotingPower(_voter);
+        uint amount = getVotingPower(_idUser);
 
-        address finalDelegate;
-        address it = getDelegate(_voter);
+        uint finalDelegate;
+        uint it = getDelegate(_idUser);
         while (it != 0) {
             finalDelegate = it;
             updateValueAtNow(votingPower[finalDelegate], getVotingPower(finalDelegate) - amount);
@@ -134,7 +136,7 @@ contract DelegateStatus is Owned {
 
         if (finalDelegate == 0) return;
 
-        updateValueAtNow(delegate[_voter], 0);
+        updateValueAtNow(delegate[_idUser], 0);
 
     }
 
@@ -177,7 +179,8 @@ contract DelegateStatus is Owned {
            }
     }
 
-    function isDelegate(address _voter) internal returns(bool) {
-        return (uint(_voter) < 0x1000000);
+
+    function isDelegate(uint idUser) internal returns(bool) {
+        return (idUser > DELEGATE_OFFSET);
     }
 }
