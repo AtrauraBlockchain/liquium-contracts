@@ -24,6 +24,9 @@ module.exports.getCategoriesDelegations = getCategoriesDelegations;
 module.exports.getPollsStatus = getPollsStatus;
 module.exports.getAllInfo = getAllInfo;
 module.exports.removeVoter = removeVoter;
+module.exports.getVoterInfo = getVoterInfo;
+module.exports.getDelegateInfo = getDelegateInfo;
+module.exports.getIdUser = getIdUser;
 
 module.exports.waitTx = waitTx;
 
@@ -178,11 +181,8 @@ function removeVoter(web3, organizationAddr, idVoter, cb) {
             organization.removeVoter(idVoter, { from: owner, gas: 500000}, function(err, txHash) {
                 if (err) return cb(err);
 
-                    waitTx(web3,txHash, function(err, res) {
+                    waitTx(web3,txHash, function(err) {
                         if (err) return cb(err);
-                        // log 0 -> CategoryAdded
-                        //      topic 0 -> Event Name
-                        //      topic 1 -> idSubmission
                         cb();
                     });
             });
@@ -242,11 +242,8 @@ function removeCategory(web3, organizationAddr, idCategory, cb) {
             organization.removeCategory(idCategory, { from: owner, gas: 500000}, function(err, txHash) {
                 if (err) return cb(err);
 
-                    waitTx(web3,txHash, function(err, res) {
+                    waitTx(web3,txHash, function(err) {
                         if (err) return cb(err);
-                        // log 0 -> CategoryAdded
-                        //      topic 0 -> Event Name
-                        //      topic 1 -> idSubmission
                         cb();
                     });
             });
@@ -306,11 +303,8 @@ function removeDelegate(web3, organizationAddr, idDelegate, cb) {
             organization.removeDelegate(idDelegate, { from: owner, gas: 500000}, function(err, txHash) {
                 if (err) return cb(err);
 
-                    waitTx(web3,txHash, function(err, res) {
+                    waitTx(web3,txHash, function(err) {
                         if (err) return cb(err);
-                        // log 0 -> CategoryAdded
-                        //      topic 0 -> Event Name
-                        //      topic 1 -> idSubmission
                         cb();
                     });
             });
@@ -630,8 +624,7 @@ function getCategoriesDelegations(web3,organizationAddr, voter, cb) {
     });
 }
 
-function getPollsStatus(web3,organizationAddr, _voter, cb) {
-    var voter = toAddress(web3, _voter);
+function getPollsStatus(web3,organizationAddr, idUser, cb) {
     var voterPolls = {};
     var polls;
     async.series([
@@ -649,7 +642,7 @@ function getPollsStatus(web3,organizationAddr, _voter, cb) {
                 };
                 async.series([
                     function(cb) {
-                        getDelegations(web3, poll.delegateStatusAddr, voter, function(err, _delegationList) {
+                        getDelegations(web3, poll.delegateStatusAddr, idUser, function(err, _delegationList) {
                             if (err) return cb(err);
                             pollStatus.delegationList = _delegationList;
                             cb();
@@ -658,7 +651,7 @@ function getPollsStatus(web3,organizationAddr, _voter, cb) {
                     function(cb) {
                         var finalVoter;
                         if (pollStatus.delegationList.length === 0) {
-                            finalVoter = voter;
+                            finalVoter = idUser;
                         } else {
                             finalVoter = pollStatus.delegationList[pollStatus.delegationList.length-1];
                         }
@@ -669,7 +662,7 @@ function getPollsStatus(web3,organizationAddr, _voter, cb) {
                         });
                     },
                     function(cb) {
-                        getVotingPower(web3, poll.delegateStatusAddr, voter, function(err, _votingPower) {
+                        getVotingPower(web3, poll.delegateStatusAddr, idUser, function(err, _votingPower) {
                             if (err) return cb(err);
                             pollStatus.votingPower = _votingPower;
                             cb();
@@ -689,12 +682,11 @@ function getPollsStatus(web3,organizationAddr, _voter, cb) {
     });
 }
 
-function getDelegations(web3, delegateStatusAddr, _voter, cb) {
-    var voter = toAddress(web3, _voter);
+function getDelegations(web3, delegateStatusAddr, idUser, cb) {
     var delegateStatus = web3.eth.contract(interfaces.delegateStatusAbi).at(delegateStatusAddr);
     var delegationList = [];
     var done = false;
-    var it = voter;
+    var it = idUser;
     async.whilst(
         function() {
             return !done;
@@ -719,41 +711,22 @@ function getDelegations(web3, delegateStatusAddr, _voter, cb) {
     );
 }
 
-function toAddress(web3, a) {
-    if (web3.isAddress(a)) return a;
-    try {
-        var S = web3.toBigNumber(a).toString(16);
-        while (S.length < 40) S = "0" + S;
-        S="0x" +S;
-        return S;
-    } catch (err) {
-        return "0x0";
-    }
+
+function isDelegate(web3, idUser) {
+    var idUserBN = web3.toBigNumber(idUser);
+    var limitBN = web3.toBigNumber("0x100000000");
+    return idUserBN.cmp(limitBN)>0;
 }
 
-function isDelegate(web3, voter) {
-    var voterBN = web3.toBigNumber(voter);
-    var limitBN = web3.toBigNumber("0x1000000");
-    return voterBN.cmp(limitBN)<0;
-}
 
-function getVote(web3, organizationAddr, idPoll, voter, cb) {
-    if (isDelegate(web3, voter)) {
-        getDelegateVote(web3, organizationAddr, idPoll, voter, cb);
-    } else {
-        getVoterVote(web3, organizationAddr, idPoll, voter, cb);
-    }
-}
-
-function getVoterVote(web3, organizationAddr, idPoll, _voter, cb) {
+function getVote(web3, organizationAddr, idPoll, idUser, cb) {
     var vote = {};
-    var voter = toAddress(web3, _voter);
     var organization = web3.eth.contract(interfaces.organizationAbi).at(organizationAddr);
     var nBallots;
 
     async.series([
         function(cb) {
-            organization.getVoteInfo(idPoll,  voter, function(err, res) {
+            organization.getVoteInfo(idPoll,  idUser, function(err, res) {
                 if (err) return cb(err);
                 vote.time = res[0].toNumber();
                 vote.total = res[1].toNumber();
@@ -770,7 +743,7 @@ function getVoterVote(web3, organizationAddr, idPoll, _voter, cb) {
                     return i<nBallots;
                 },
                 function(cb) {
-                    organization.getBallotInfo(idPoll, voter, i, function(err, res) {
+                    organization.getBallotInfo(idPoll, idUser, i, function(err, res) {
                         if (err) return cb(err);
                         if (!res[1].isZero()) {
                             vote.ballots.push({
@@ -803,75 +776,58 @@ function getVoterVote(web3, organizationAddr, idPoll, _voter, cb) {
 
 }
 
-function getDelegateVote(web3, organizationAddr, idPoll, _voter, cb) {
-    var vote = {};
-    var voter = web3.toBigNumber(_voter).toNumber();
-    var organization = web3.eth.contract(interfaces.organizationAbi).at(organizationAddr);
-    var nBallots;
-
-    async.series([
-        function(cb) {
-            organization.dGetVoteInfo(idPoll,  voter, function(err, res) {
-                if (err) return cb(err);
-                voter.time = res[0].toNumber();
-                voter.total = res[1].toNumber();
-                voter.ballots = [];
-                nBallots = res[2];
-                voter.motivation = res[3];
-                cb();
-            });
-        },
-        function(cb) {
-            var i =0;
-            var totalAmount = web3.toBigNumber(0);
-            async.whilest(
-                function() {
-                    return i<nBallots;
-                },
-                function(cb) {
-                    organization.dGetBallotInfo(idPoll, voter, i, function(err, res) {
-                        if (err) return cb(err);
-                        if (!res[1].isZero()) {
-                            vote.ballots.push({
-                                ballot: res[0],
-                                amount: res[1]
-                            });
-                            totalAmount = totalAmount.add(res[1]);
-                        }
-                        i+=1;
-                        cb();
-                    });
-
-                },
-                function(err) {
-                    if (err) return cb(err);
-                    _.each(vote.ballots, function(ballot) {
-                        ballot.amount = ballot.amount.
-                                        mul(100).
-                                        div(totalAmount).
-                                        toNumber();
-                    });
-                    cb();
-                }
-            );
-        }
-    ], function(err) {
-        if (err) return cb(err);
-        cb(null, vote);
-    });
-}
-
-function getVotingPower(web3, delegateStatusAddr,  _voter, cb) {
-    var voter = toAddress(web3, _voter);
+function getVotingPower(web3, delegateStatusAddr,  idUser, cb) {
     var delegateStatus = web3.eth.contract(interfaces.delegateStatusAbi).at(delegateStatusAddr);
-    delegateStatus.getVotingPower(voter, function(err, res) {
+    delegateStatus.getVotingPower(idUser, function(err, res) {
         if (err) return cb(err);
         cb(null, web3.fromWei(res));
     });
 }
 
-function getAllInfo(web3, organizationAddr, voter, cb) {
+function getIdUser(web3, organizationAddr,  userAddr, cb) {
+    var idUser;
+    var organization = web3.eth.contract(interfaces.organizationAbi).at(organizationAddr);
+    organization.voterAddr2Idx(userAddr, function(err,res) {
+        if (err) return cb(err);
+        idUser = res.toNumber();
+        if (idUser) return cb(null, idUser);
+        organization.delegateAddr2Idx(userAddr, function(err,res) {
+            if (err) return cb(err);
+            idUser = res.toNumber();
+            cb(null, idUser);
+        });
+    });
+}
+
+
+function getVoterInfo(web3, organizationAddr, idUser, cb) {
+    var voter = {};
+    var organization = web3.eth.contract(interfaces.organizationAbi).at(organizationAddr);
+    organization.getVoter(idUser, function(err, res) {
+        if (err) return cb(err);
+        voter.name=res[0];
+        voter.owner = res[1];
+        voter.balance = web3.fromWei(res[2]);
+        cb(null, voter);
+    });
+}
+
+function getDelegateInfo(web3, organizationAddr, idUser, cb) {
+    var delegate = {};
+    var organization = web3.eth.contract(interfaces.organizationAbi).at(organizationAddr);
+    organization.getDelegate(idUser, function(err, res) {
+        if (err) return cb(err);
+        delegate.name=res[0];
+        delegate.owner = res[1];
+        delegate.deleted = res[2];
+        cb(null, delegate);
+    });
+}
+
+
+function getAllInfo(web3, organizationAddr, voterAddr, cb) {
     var organizationInfo;
+    var idUser;
     async.series([
         function(cb) {
             getOrganizationInfo(web3, organizationAddr, function(err, res) {
@@ -880,8 +836,33 @@ function getAllInfo(web3, organizationAddr, voter, cb) {
                 cb();
             });
         },
+
         function(cb) {
-            getCategoriesDelegations(web3, organizationAddr, voter, function(err, res) {
+            getIdUser(web3, organizationAddr,voterAddr, function(err,res) {
+                if (err) return cb(err);
+                idUser = res;
+                cb();
+            });
+        },
+        function(cb) {
+            if (idUser == 0) return cb();
+            if (isDelegate(idUser)) {
+                getDelegateInfo(web3, organizationAddr, idUser, function(err, res) {
+                    if (err) return cb(err);
+                    organizationInfo.delegate = res;
+                    cb();
+                });
+            } else {
+                getVoterInfo(web3, organizationAddr, idUser, function(err, res) {
+                    if (err) return cb(err);
+                    organizationInfo.voter = res;
+                    cb();
+                });
+            }
+        },
+        function(cb) {
+            if (idUser == 0) return cb();
+            getCategoriesDelegations(web3, organizationAddr, idUser, function(err, res) {
                 if (err) return cb(err);
                 _.each(res, function(delegationList, idCategory) {
                     organizationInfo.categories[idCategory].delegationList = delegationList;
@@ -890,7 +871,8 @@ function getAllInfo(web3, organizationAddr, voter, cb) {
             });
         },
         function(cb) {
-            getPollsStatus(web3, organizationAddr ,voter, function(err, res) {
+            if (idUser == 0) return cb();
+            getPollsStatus(web3, organizationAddr ,idUser, function(err, res) {
                 if (err) return cb(err);
                 _.each(res, function(pollStatus, idPoll) {
                     _.extend(organizationInfo.polls[idPoll],pollStatus);

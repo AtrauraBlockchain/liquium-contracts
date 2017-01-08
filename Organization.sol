@@ -181,7 +181,7 @@ contract Organization is OrganizationInterface, Owned {
             return voterAddr2Idx[addr];
         }
         if (delegateAddr2Idx[addr]>0) {
-            return delegateAddr2Idx[addr] + DELEGATE_OFFSET;
+            return delegateAddr2Idx[addr];
         }
         throw;
     }
@@ -484,9 +484,27 @@ contract Organization is OrganizationInterface, Owned {
         voterAddr2Idx[v.owner] =0;
     }
 
-    function nVoters() returns(uint) {
+    function _getVoter(uint _idVoter) internal returns (Voter storage v) {
+        if (_idVoter == 0) throw;
+        if (_idVoter >= voters.length) throw;
+        v = voters[_idVoter];
+    }
+
+    function nVoters() constant returns(uint) {
         return voters.length-1;
     }
+
+    function getVoter(uint _idVoter) constant returns (
+        string _name,
+        address _owner,
+        uint _balance
+    ) {
+        Voter voter = _getVoter(_idVoter);
+        _name = voter.name;
+        _owner = voter.owner;
+        _balance = voter.balance;
+    }
+
 
     function addDelegate(address _delegateAddr, string _name) onlyOwner returns(uint _idDelegate) {
 
@@ -497,10 +515,10 @@ contract Organization is OrganizationInterface, Owned {
         Delegate d = delegates[idDelegate];
         d.name = _name;
         d.owner = _delegateAddr;
-        delegateAddr2Idx[_delegateAddr] = idDelegate;
 
         idDelegate += DELEGATE_OFFSET;
 
+        delegateAddr2Idx[_delegateAddr] = idDelegate;
         payUser(_delegateAddr);
 
         DelegateAdded(idDelegate);

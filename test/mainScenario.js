@@ -100,6 +100,22 @@ describe('Normal Scenario Liquium test', function(){
                         cb();
                     });
                 },
+                function(cb) {
+                    liquiumRT.getIdUser(web3, organization.address, voter1, function(err,res) {
+                        assert.ifError(err);
+                        assert.equal(res, idVoter);
+                        cb();
+                    });
+                },
+                function(cb) {
+                    liquiumRT.getVoterInfo(web3, organization.address, idVoter, function(err, res) {
+                        assert.ifError(err);
+                        assert.equal(res.name, "Voter1");
+                        assert.equal(res.owner, voter1);
+                        assert.equal(res.balance, 1);
+                        cb();
+                    });
+                }
             ],done);
         });
     });
@@ -283,12 +299,20 @@ describe('Normal Scenario Liquium test', function(){
             assert.ifError(err);
             idDelegate = _idDelegate;
             async.series([
+
                 function(cb) {
-                    organization.getDelegate(idDelegate, function(err, res) {
-                        if (err) return cb(err);
-                        assert.equal(res[0], "Delegate1");
-                        assert.equal(res[1], delegate1);
-                        assert.equal(res[2], false);
+                    liquiumRT.getIdUser(web3, organization.address, delegate1, function(err,res) {
+                        assert.ifError(err);
+                        assert.equal(res, idDelegate);
+                        cb();
+                    });
+                },
+                function(cb) {
+                    liquiumRT.getDelegateInfo(web3, organization.address, idDelegate, function(err, res) {
+                        assert.ifError(err);
+                        assert.equal(res.name, "Delegate1");
+                        assert.equal(res.owner, delegate1);
+                        assert.equal(res.deleted, false);
                         cb();
                     });
                 }
