@@ -625,7 +625,7 @@ function getVoters(web3, organizationAddr, cb) {
                         idVoter: idVoter,
                         name: res[0],
                         owner: res[1],
-                        balance: web3.fromWei(res[2])
+                        balance: web3.fromWei(res[2]).toNumber()
                     };
                     cb();
                 });
