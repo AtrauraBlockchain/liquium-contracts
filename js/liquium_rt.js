@@ -27,6 +27,7 @@ module.exports.removeVoter = removeVoter;
 module.exports.getVoterInfo = getVoterInfo;
 module.exports.getDelegateInfo = getDelegateInfo;
 module.exports.getIdUser = getIdUser;
+module.exports.getVoters = getVoters;
 
 module.exports.waitTx = waitTx;
 
@@ -414,6 +415,13 @@ function getOrganizationInfo(web3, organizationAddr, cb) {
                 orgJson.delegates = res;
                 cb();
             });
+        },
+        function(cb) {
+            getVoters(web3, organizationAddr, function(err, res) {
+                if (err) return cb(err);
+                orgJson.voters = res;
+                cb();
+            });
         }
     ],function(err) {
         if (err) return cb(err);
@@ -516,7 +524,7 @@ function getSingleChoiceParams(web3, singleChoiceAddr, cb) {
                     function(cb) {
                         singleChoice.result(idOptions, function(err, res) {
                             if (err) return cb(err);
-                            o.result = web3.fromWei(res);
+                            o.result = web3.fromWei(res).toNumber();
                             cb();
                         });
                     }
@@ -594,6 +602,38 @@ function getDelegates(web3, organizationAddr, cb) {
     ], function(err) {
         if (err) return cb(err);
         cb(null, delegates);
+    });
+}
+
+function getVoters(web3, organizationAddr, cb) {
+    var voters = {};
+    var nVoters;
+    var organization = web3.eth.contract(interfaces.organizationAbi).at(organizationAddr);
+    async.series([
+        function(cb) {
+            organization.nVoters(function(err, res) {
+                if (err) return cb(err);
+                nVoters = web3.toBigNumber(res).toNumber();
+                cb();
+            });
+        },
+        function(cb) {
+            async.eachSeries(_.range(1, nVoters+1), function(idVoter, cb) {
+                organization.getVoter(idVoter, function(err, res) {
+                    if (err) return cb(err);
+                    voters[idVoter] = {
+                        idVoter: idVoter,
+                        name: res[0],
+                        owner: res[1],
+                        balance: web3.fromWei(res[2])
+                    };
+                    cb();
+                });
+            }, cb);
+        }
+    ], function(err) {
+        if (err) return cb(err);
+        cb(null, voters);
     });
 }
 
