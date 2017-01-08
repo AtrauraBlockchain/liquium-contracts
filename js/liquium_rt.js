@@ -547,7 +547,7 @@ function getCategories(web3,organizationAddr, cb) {
         },
         function(cb) {
             async.eachSeries(_.range(1, nCategories+1), function(idCategory, cb) {
-                organization.categories(idCategory, function(err, res) {
+                organization.getCategory(idCategory, function(err, res) {
                     if (err) return cb(err);
                     categories[idCategory] = {
                         idCategory: idCategory,
@@ -579,7 +579,7 @@ function getDelegates(web3, organizationAddr, cb) {
         },
         function(cb) {
             async.eachSeries(_.range(1, nDelegates+1), function(idDelegate, cb) {
-                organization.delegates(idDelegate, function(err, res) {
+                organization.getDelegate(idDelegate, function(err, res) {
                     if (err) return cb(err);
                     delegates[idDelegate] = {
                         idDelegate: idDelegate,
@@ -846,7 +846,7 @@ function getAllInfo(web3, organizationAddr, voterAddr, cb) {
         },
         function(cb) {
             if (idUser == 0) return cb();
-            if (isDelegate(idUser)) {
+            if (isDelegate(web3, idUser)) {
                 getDelegateInfo(web3, organizationAddr, idUser, function(err, res) {
                     if (err) return cb(err);
                     organizationInfo.delegate = res;

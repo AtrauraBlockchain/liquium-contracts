@@ -83,9 +83,9 @@ function addVoter(account, name, cb) {
     });
 }
 
-function addDelegate(name, account, cb) {
+function addDelegate(account, name, cb) {
     cb = cb || function() {};
-    liquiumRT.addDelegate(web3, organization.address, name, account, function(err, _idDelegate) {
+    liquiumRT.addDelegate(web3, organization.address, account, name, function(err, _idDelegate) {
         if (err) {
             console.log(err);
             return cb(err);
@@ -112,7 +112,7 @@ function deployExample(cb) {
             addVoter(web3.eth.accounts[1], "Voter1", cb);
         },
         function(cb) {
-            addDelegate("Delegate1", web3.eth.accounts[2], cb);
+            addDelegate(web3.eth.accounts[2], "Delegate1",cb);
         }
     ], cb);
 }
