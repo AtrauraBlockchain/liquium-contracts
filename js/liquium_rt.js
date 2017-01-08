@@ -90,7 +90,7 @@ function deployOrganization (web3, account, opts, cb) {
                 {
                     from: account,
                     data: interfaces.organizationByteCode,
-                    gas: '4712000',
+                    gas: '4000000',
                     value: web3.toWei(10)
                 },
                 function(err, _organization) {
@@ -590,7 +590,7 @@ function getDelegates(web3, organizationAddr, cb) {
                 organization.getDelegate(idDelegate, function(err, res) {
                     if (err) return cb(err);
                     delegates[idDelegate] = {
-                        idDelegate: idDelegate,
+                        idDelegate: idDelegate+0x100000000,
                         name: res[0],
                         owner: res[1],
                         deleted: res[2]
