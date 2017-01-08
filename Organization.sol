@@ -76,7 +76,7 @@ contract Organization is OrganizationInterface, Owned {
     uint constant  MIN_TIME_FINAL_VOTING = 86400;
     uint constant  DELEGATE_MODIFICATION_TIME = 3600*4;
     uint constant  DELEGATE_OFFSET = 0x100000000;
-    uint constant  USER_ETH_LEVEL = 5 * 10^16;
+    uint constant  USER_ETH_LEVEL = 50 finney;
 
     struct Category {
         string name;
