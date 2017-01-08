@@ -71,9 +71,9 @@ function addPoll(title, definition,cb) {
     });
 }
 
-function addVoter(account, cb) {
+function addVoter(account, name, cb) {
     cb = cb || function() {};
-    organization.addVoter(account, web3.toWei(1), {from: eth.accounts[0], gas:500000}, function(err, res) {
+    organization.addVoter(account, name, web3.toWei(1), {from: eth.accounts[0], gas:500000}, function(err, res) {
         if (err) {
             console.log(err);
             return cb(err);
@@ -109,7 +109,7 @@ function deployExample(cb) {
             addPoll("Poll1", pollExample1, cb);
         },
         function(cb) {
-            addVoter(web3.eth.accounts[1], cb);
+            addVoter(web3.eth.accounts[1], "Voter1", cb);
         },
         function(cb) {
             addDelegate("Delegate1", web3.eth.accounts[2], cb);
