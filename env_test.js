@@ -117,4 +117,45 @@ function deployExample(cb) {
     ], cb);
 }
 
+function vote(account, idPoll, option, cb) {
+    cb = cb || function() {};
+    organization.vote(idPoll, [singleChoice.getBallot(option)], [web3.toWei(1)],"", {from: account, gas: 400000}, function(err) {
+        if (err) {
+            console.log(err);
+            return cb(err);
+        }
+        console.log("Voted succefully");
+        cb();
+    });
+
+}
+
+function getInfo(account, cb) {
+    if (typeof account === "function") {
+        cb = account;
+        account = null;
+    }
+    cb = cb || function() {};
+    if (account) {
+        liquiumRT.getAllInfo(web3, organization.address, account, function(err, res) {
+            if (err) {
+                console.log(err);
+                return cb(err);
+            }
+            console.log(JSON.stringify(res,null,2));
+            cb();
+        });
+    } else {
+        liquiumRT.getOrganizationInfo(web3, organization.address, function(err, res) {
+            if (err) {
+                console.log(err);
+                return cb(err);
+            }
+            console.log(JSON.stringify(res,null,2));
+            cb();
+        });
+    }
+
+}
+
 
