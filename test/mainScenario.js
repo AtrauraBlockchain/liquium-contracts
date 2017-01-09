@@ -477,6 +477,41 @@ describe('Normal Scenario Liquium test', function(){
             ],done);
         });
     });
+    it('Should delete voter', function(done) {
+        liquiumRT.removeVoter(web3, organization.address, idVoter, function(err) {
+            assert.ifError(err);
+            async.series([
+                function(cb) {
+                    organization.voterAddr2Idx(voter1, function(err,res) {
+                        assert.ifError(err);
+                        assert.equal(res, 0);
+                        cb();
+                    });
+                },
+                function(cb) {
+                    organization.balanceOf(idVoter, function(err, res) {
+                        assert.ifError(err);
+                        assert.equal(web3.fromWei(res).toNumber(), 0);
+                        cb();
+                    });
+                },
+                function(cb) {
+                    organization.getVoteInfo(idPoll, idVoter, function(err,res) {
+                        if (err) return cb(err);
+                        assert.equal(web3.fromWei(res[1]).toNumber(), 0);
+                        cb();
+                    });
+                },
+                function(cb) {
+                    singleChoice.result(2, function(err, res) {
+                        if (err) return cb(err);
+                        assert.equal(web3.fromWei(res).toNumber(), 0);
+                        cb();
+                    });
+                }
+            ],done);
+        });
+    });
 
 /*
     it("Should get voter status",function(done) {
